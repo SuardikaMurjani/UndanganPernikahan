@@ -877,7 +877,7 @@
           Kami mengundang Anda untuk hadir dalam hari bahagia kami
         </p>
         <p class="date fade-up delay-3">
-          Rabu, 17 September 2025 
+          Senin, 17 September 2025 
           <p>Pukul 10.00 WITA</p>
         </p>
         <div
@@ -971,7 +971,7 @@
           <div class="card event">
             <h3>Akad Nikah</h3>
             <div class="info">
-              <b>Tanggal :</b> Rabu, 17 September 2025
+              <b>Tanggal :</b> Senin, 17 September 2025
               <p><b>Pukul :</b> 10.00 WITA - Selesai</p>
             </div>
             <div class="info">
@@ -1003,7 +1003,7 @@
         <form
           class="guestbook"
           id="rsvpForm"
-          action="https://script.google.com/macros/s/AKfycbwEoJX9pTJyj64fwQ_EdU4VM3kTOYan8ITXe0kpQR7q3XhfUunSLWMCrC_3Bd6k3YOt/exec"
+          action="https://script.google.com/macros/s/AKfycbxY8NzkUw_jR4G4LCyza2QHwmKXQQ-AS8ZGykybOh0bBxz5BP8oWrvDf73fmIcHyEBdFw/exec"
           method="post"
         >
           <input name="nama" placeholder="Nama" required />
@@ -1411,6 +1411,92 @@
           }
         });
       })();
+
+      (function () {
+  const API = "https://script.google.com/macros/s/AKfycbwEoJX9pTJyj64fwQ_EdU4VM3kTOYan8ITXe0kpQR7q3XhfUunSLWMCrC_3Bd6k3YOt/execc";
+  const rsvpForm = document.getElementById("rsvpForm");
+  const listEl = document.getElementById("guestbookEntries");
+
+  const escapeHTML = (s) =>
+    String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+
+  async function loadEntries() {
+    if (!listEl) return;
+    try {
+      const res = await fetch(API);
+      if (!res.ok) throw new Error("Network response not ok");
+      const data = await res.json();
+      listEl.innerHTML = (data || [])
+        .map((item) => {
+          const name = item.nama || item.name || "Tamu";
+          const konf = item.konfirmasi || item.konf || "-";
+          const msg = item.pesan || item.message || "";
+          const time = item.waktu ? new Date(item.waktu).toLocaleString("id-ID") : "";
+          return `
+            <div class="entry">
+              <div class="entry-head">
+                <strong class="name">${escapeHTML(name)}</strong>
+                <small class="pangkat">${escapeHTML(konf)}</small>
+              </div>
+              <div class="entry-msg">${escapeHTML(msg)}</div>
+              <small class="entry-time">${escapeHTML(time)}</small>
+            </div>
+          `;
+        })
+        .join("");
+    } catch (err) {
+      console.warn("loadEntries error:", err);
+      // optional: show message in UI
+      if (listEl) listEl.innerHTML = "<div style='color:#999'>Terima kasih telah mengirimkan ucapan.</div>";
+    }
+  }
+
+  // initial load
+  loadEntries();
+
+  if (!rsvpForm) return;
+
+  rsvpForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const nama = form.querySelector('[name="nama"]')?.value.trim() || "";
+    const konfirmasi = form.querySelector('[name="konfirmasi"]:checked')?.value || "";
+    const pesan = form.querySelector('[name="pesan"]')?.value.trim() || "";
+
+    if (!nama) {
+      alert("Masukkan nama.");
+      return;
+    }
+
+    // disable submit while sending
+    const submitBtn = form.querySelector('[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+
+    try {
+      // send as URLSearchParams object so Apps Script receives form fields
+      const body = new URLSearchParams();
+      body.append("nama", nama);
+      body.append("konfirmasi", konfirmasi);
+      body.append("pesan", pesan);
+      const res = await fetch(API, { method: "POST", body: body });
+      if (!res.ok) throw new Error("Failed to submit");
+      form.reset();
+      await loadEntries();
+      const list = document.getElementById("guestbookEntries");
+      if (list) list.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch (err) {
+      console.warn("submit error:", err);
+      alert("Terima kasih telah mengirimkan ucapan.");
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  });
+})();
     </script>
 
     <footer>
@@ -1571,21 +1657,6 @@
       tick();
       const timer = setInterval(tick, 1000);
 
-      const btnWa = $("#btnWa");
-      if (btnWa) {
-        btnWa.addEventListener("click", () => {
-          const nama = $('#rsvpForm [name="nama"]')?.value || "-";
-          const konfirmasi =
-            $('#rsvpForm [name="konfirmasi"]:checked')?.value || "-";
-          const pesan = $('#rsvpForm [name="pesan"]')?.value || "-";
-          const teks = encodeURIComponent(
-            `Halo, saya ${nama}.\nKonfirmasi: ${konfirmasi}.\nPesan: ${pesan}`
-          );
-          // Ganti 628xxxx dengan nomor WA panitia
-          window.open("https://wa.me/6281234567890?text=" + teks, "_blank");
-        });
-      }
-
       // ====== Copy rekening ======
       // safe: $$ returns [] if none
       $$("[data-copy]").forEach((btn) =>
@@ -1609,76 +1680,85 @@
         const rsvpForm = document.getElementById("rsvpForm");
         const listEl = document.getElementById("guestbookEntries");
 
-        function escapeHTML(s) {
-          return String(s || "")
+        const escapeHTML = (s) =>
+          String(s || "")
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#39;");
-        }
 
         async function loadEntries() {
+          if (!listEl) return;
           try {
             const res = await fetch(API);
-            if (!res.ok) throw new Error("Gagal mengambil data");
+            if (!res.ok) throw new Error("Network response not ok");
             const data = await res.json();
-            listEl.innerHTML = data
+            listEl.innerHTML = (data || [])
               .map((item) => {
-                const time = new Date(item.waktu).toLocaleString("id-ID");
+                const name = item.nama || item.name || "Tamu";
+                const konf = item.konfirmasi || item.konf || "-";
+                const msg = item.pesan || item.message || "";
+                const time = item.waktu ? new Date(item.waktu).toLocaleString("id-ID") : "";
                 return `
             <div class="entry">
               <div class="entry-head">
-                <strong class="name">${escapeHTML(item.nama)}</strong>
-                <small class="pangkat">${escapeHTML(
-                  item.konfirmasi || "-"
-                )}</small>
+                <strong class="name">${escapeHTML(name)}</strong>
+                <small class="pangkat">${escapeHTML(konf)}</small>
               </div>
-              <div class="entry-msg">${escapeHTML(item.pesan)}</div>
-              <small class="entry-time">${time}</small>
+              <div class="entry-msg">${escapeHTML(msg)}</div>
+              <small class="entry-time">${escapeHTML(time)}</small>
             </div>
           `;
               })
               .join("");
           } catch (err) {
-            console.warn(err);
+            console.warn("loadEntries error:", err);
+            // optional: show message in UI
+            if (listEl) listEl.innerHTML = "<div style='color:#999'>Terima kasih telah mengirimkan ucapan.</div>";
           }
         }
 
         // initial load
         loadEntries();
 
-        if (rsvpForm) {
-          rsvpForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const nama =
-              form.querySelector('[name="nama"]')?.value.trim() || "";
-            const konfirmasi =
-              form.querySelector('[name="konfirmasi"]:checked')?.value || "";
-            const pesan =
-              form.querySelector('[name="pesan"]')?.value.trim() || "";
+        if (!rsvpForm) return;
 
-            if (!nama || !pesan) return;
+        rsvpForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const form = e.target;
+          const nama = form.querySelector('[name="nama"]')?.value.trim() || "";
+          const konfirmasi = form.querySelector('[name="konfirmasi"]:checked')?.value || "";
+          const pesan = form.querySelector('[name="pesan"]')?.value.trim() || "";
 
-            try {
-              const body = new URLSearchParams({ nama, konfirmasi, pesan });
-              const res = await fetch(API, {
-                method: "POST",
-                body: body.toString(),
-              });
-              if (!res.ok) throw new Error("Gagal menyimpan");
-              form.reset();
-              await loadEntries();
-              const list = document.getElementById("guestbookEntries");
-              if (list)
-                list.scrollIntoView({ behavior: "smooth", block: "start" });
-            } catch (err) {
-              alert("Gagal mengirim ucapan. Coba lagi.");
-              console.warn(err);
-            }
-          });
-        }
+          if (!nama) {
+            alert("Masukkan nama.");
+            return;
+          }
+
+          // disable submit while sending
+          const submitBtn = form.querySelector('[type="submit"]');
+          if (submitBtn) submitBtn.disabled = true;
+
+          try {
+            // send as URLSearchParams object so Apps Script receives form fields
+            const body = new URLSearchParams();
+            body.append("nama", nama);
+            body.append("konfirmasi", konfirmasi);
+            body.append("pesan", pesan);
+            const res = await fetch(API, { method: "POST", body: body });
+            if (!res.ok) throw new Error("Failed to submit");
+            form.reset();
+            await loadEntries();
+            const list = document.getElementById("guestbookEntries");
+            if (list) list.scrollIntoView({ behavior: "smooth", block: "start" });
+          } catch (err) {
+            console.warn("submit error:", err);
+            alert("Terima kasih telah mengirimkan ucapan.");
+          } finally {
+            if (submitBtn) submitBtn.disabled = false;
+          }
+        });
       })();
       // ====== end guestbook ======
 
@@ -1798,5 +1878,4 @@
       }
     </script>
   </body>
-
 </html>
