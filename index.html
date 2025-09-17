@@ -6,7 +6,7 @@
     <title>Undangan Pernikahan – Suardika & Murjani</title>
     <meta
       name="description"
-      content="Undangan pernikahan Suardika & Murjani pada 17 September 2031. Kehadiran Anda sangat berarti."
+      content="Undangan pernikahan Suardika & Murjani pada 17 September 2026. Kehadiran Anda sangat berarti."
     />
     <meta
       property="og:title"
@@ -890,7 +890,7 @@
           Kami mengundang Anda untuk hadir dalam hari bahagia kami
         </p>
         <p class="date fade-up delay-3">
-          Rabu, 17 September 2031 
+          Rabu, 17 September 2026 
           <p>Pukul 10.00 WITA</p>
         </p>
         <div
@@ -984,7 +984,7 @@
           <div class="card event">
             <h3>Akad Nikah</h3>
             <div class="info">
-              <b>Tanggal :</b> Rabu, 17 September 2031
+              <b>Tanggal :</b> Rabu, 17 September 2026
               <p><b>Pukul :</b> 10.00 WITA - Selesai</p>
             </div>
             <div class="info">
@@ -1637,20 +1637,30 @@
       // Tahun footer
       $("#year") && ($("#year").textContent = new Date().getFullYear());
 
-      // ====== COUNTDOWN ======
-      // 17 September 2031 jam 10:00 WITA
-      const target = new Date("2031-09-17T10:00:00+08:00");
+            // ====== COUNTDOWN ======
+      // 17 September 2025 jam 10:00 WITA
+      const target = new Date("2025-09-17T10:00:00+08:00");
       const cd = $("#countdown");
+
+      // deklarasi timer sebelum pemanggilan tick agar clearInterval aman
+      let timer = null;
 
       function tick() {
         const now = new Date();
         const diff = target - now;
 
         if (diff <= 0) {
-          cd.innerHTML = `<div style="text-align:center">
-      <h3>🎉 Acara Sedang Berlangsung 🎉</h3>
-    </div>`;
-          clearInterval(timer);
+          // Tampilkan 0:00:00:00 saat waktu habis — jangan otomatis menutup cover
+          cd.innerHTML = `
+    <div class="dd"><b>0</b><span>Hari</span></div>
+    <div class="dd"><b>0</b><span>Jam</span></div>
+    <div class="dd"><b>0</b><span>Menit</span></div>
+    <div class="dd"><b>0</b><span>Detik</span></div>
+  `;
+          if (timer) {
+            clearInterval(timer);
+            timer = null;
+          }
           return;
         }
 
@@ -1668,7 +1678,7 @@
       }
 
       tick();
-      const timer = setInterval(tick, 1000);
+      timer = setInterval(tick, 1000);
 
       // ====== Copy rekening ======
       // safe: $$ returns [] if none
@@ -1892,4 +1902,3 @@
     </script>
   </body>
 </html>
-
